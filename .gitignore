@@ -1,0 +1,16 @@
+# R
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# odin compiled model cache
+R/model_c/
+*.so
+*.o
+
+# Outputs (generated, not source)
+outputs/
+
+# OS
+.DS_Store
