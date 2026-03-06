@@ -1,6 +1,19 @@
 # R/measures.R
-# compute_ve(sim) → list with VE_RR, VE_HR_analytical, VE_HR_empirical, VE_TND,
-#                            AR_ref, AR_vax, OR_TND, HR_ts, ve_ts, diagnostics
+#
+# compute_ve(sim)  ── ORACLE / GROUND TRUTH (uses ODE internal state) ─────────
+#   All quantities derived from ODE compartments (CI, S, h[]) that are NOT
+#   observable in a real study.  Intended as simulation ground truth only.
+#   Returns: VE_RR (from CI), VE_HR_analytical (from sus[]), VE_HR_empirical
+#            (from h[]), VE_TND (from T_pos/T_neg — the one observed quantity),
+#            AR_ref, AR_vax, diagnostics, ve_ts time-series.
+#
+# compute_ve_statistical(sim)  ── OBSERVED DATA ONLY ──────────────────────────
+#   All quantities derived from T_pos, T_neg, and N — exactly what a real study
+#   would observe.  This is the PRIMARY comparison of VE estimators.
+#   VE_RR  : Poisson rate ratio  (cases = T_pos, denominator = N)
+#   VE_HR  : Poisson hazard ratio (cases = ΔT_pos per bin, denominator = N)
+#   VE_TND : Logistic OR          (cases = T_pos, controls = T_neg)
+#   All three use the same numerator (T_pos) but different denominators.
 #
 # Strata are partitioned into reference (is_vaccinated=FALSE) and vaccinated
 # (is_vaccinated=TRUE); all estimators compare the aggregate vaccinated group

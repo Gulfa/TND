@@ -31,33 +31,21 @@ source("scenarios.R")
 
 # ---------------------------------------------------------------------------
 # Print summary table
+#
+# VE_RR / VE_HR / VE_TND     — observed-data estimators (T_pos, T_neg, N)
+# VE_RR_adj / VE_HR_adj / VE_TND_adj — same, adjusted for observed risk group
+# VE_true                    — oracle ground truth (N-weighted sus ratio, ODE)
+# AR_ref / AR_vax            — oracle true attack rates (ODE)
 # ---------------------------------------------------------------------------
-message("\n========== VE ESTIMATOR COMPARISON ==========")
-print(results_df[, c("scenario", "AR_ref", "AR_vax", "VE_RR",
-                      "VE_HR_analytical", "VE_HR_empirical", "VE_TND")],
+message("\n========== VE ESTIMATOR COMPARISON (observed data) ==========")
+print(results_df[, c("scenario", "VE_true", "AR_ref", "AR_vax",
+                      "VE_RR", "VE_HR", "VE_TND")],
       digits = 3, row.names = FALSE)
 
-# ---------------------------------------------------------------------------
-# Statistical analysis: unadjusted vs adjusted for observed risk group
-# (restricted to tested individuals; piecewise Poisson counting process for HR)
-# ---------------------------------------------------------------------------
-message("\n========== STATISTICAL ANALYSIS (tested individuals only) ==========")
-stat_df <- do.call(rbind, lapply(all_results, function(res) {
-  s <- res$ve_stat
-  data.frame(
-    scenario         = res$params$name,
-    VE_RR_unadj      = s$VE_RR_unadj,
-    VE_RR_adj        = s$VE_RR_adj,
-    VE_TND_unadj     = s$VE_TND_unadj,
-    VE_TND_adj       = s$VE_TND_adj,
-    VE_TND_tv_unadj  = s$VE_TND_tv_unadj,
-    VE_TND_tv_adj    = s$VE_TND_tv_adj,
-    VE_HR_unadj      = s$VE_HR_unadj,
-    VE_HR_adj        = s$VE_HR_adj,
-    stringsAsFactors = FALSE
-  )
-}))
-print(stat_df, digits = 3, row.names = FALSE)
+message("\n========== WITH RISK-GROUP ADJUSTMENT ==========")
+print(results_df[, c("scenario", "VE_true",
+                      "VE_RR_adj", "VE_HR_adj", "VE_TND_adj")],
+      digits = 3, row.names = FALSE)
 
 # ---------------------------------------------------------------------------
 # Validation report

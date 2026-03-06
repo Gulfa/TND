@@ -346,23 +346,36 @@ all_results <- lapply(scenarios, function(p) {
   list(sim = sim, ve = ve, ve_stat = ve_stat, params = p)
 })
 
-# Collate to summary data frame (one row per scenario)
+# Collate to summary data frame (one row per scenario).
+#
+# VE_RR / VE_HR / VE_TND   — observed-data estimates (from T_pos, T_neg, N only)
+# VE_RR_adj / VE_HR_adj / VE_TND_adj — same, adjusted for observed risk group
+# VE_true                  — oracle ground truth: N-weighted susceptibility ratio
+#                            (= VE_HR_analytical from ODE; the estimand all three
+#                             observed-data estimators are trying to recover)
+# AR_ref / AR_vax / HR_sd  — oracle diagnostics from ODE (not available in practice)
 results_df <- do.call(rbind, lapply(all_results, function(res) {
-  ve <- res$ve
-  p  <- res$params
+  ve  <- res$ve        # oracle ground truth (ODE internal state)
+  vs  <- res$ve_stat   # observed-data statistical estimates
+  p   <- res$params
   data.frame(
-    scenario         = p$name,
-    R0               = p$R0,
-    n_strat          = p$n_strat,
-    f_vax            = sum(p$f[p$is_vaccinated]),
-    AR_ref           = ve$AR_ref,
-    AR_vax           = ve$AR_vax,
-    VE_RR            = ve$VE_RR,
-    VE_HR_analytical = ve$VE_HR_analytical,
-    VE_HR_empirical  = ve$VE_HR_empirical,
-    VE_TND           = ve$VE_TND,
-    OR_TND           = ve$OR_TND,
-    HR_sd            = ve$HR_sd,
+    scenario   = p$name,
+    R0         = p$R0,
+    n_strat    = p$n_strat,
+    f_vax      = sum(p$f[p$is_vaccinated]),
+    # Oracle reference (from ODE — not observable in practice)
+    VE_true    = ve$VE_HR_analytical,
+    AR_ref     = ve$AR_ref,
+    AR_vax     = ve$AR_vax,
+    HR_sd      = ve$HR_sd,
+    # Observed-data estimators — unadjusted (T_pos, T_neg, N only)
+    VE_RR      = vs$VE_RR_unadj,
+    VE_HR      = vs$VE_HR_unadj,
+    VE_TND     = vs$VE_TND_unadj,
+    # Observed-data estimators — adjusted for observed risk group
+    VE_RR_adj  = vs$VE_RR_adj,
+    VE_HR_adj  = vs$VE_HR_adj,
+    VE_TND_adj = vs$VE_TND_adj,
     stringsAsFactors = FALSE
   )
 }))

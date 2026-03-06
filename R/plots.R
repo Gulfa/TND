@@ -74,33 +74,47 @@ plot_epidemic <- function(sim, scenario_name = "") {
 }
 
 # ---------------------------------------------------------------------------
-# 2. plot_ve_comparison(results_df) — grouped bar chart, one bar per estimator
+# 2. plot_ve_comparison(results_df) — grouped bar chart, one bar per estimator.
+#    All three estimators use observed data only (T_pos, T_neg, N).
+#    Diamond marker shows oracle VE_true (N-weighted susceptibility ratio from ODE).
 # ---------------------------------------------------------------------------
 plot_ve_comparison <- function(results_df) {
   .ensure_outdir()
 
+  sc_levels <- unique(results_df$scenario)
+
   long <- results_df %>%
-    select(scenario, VE_RR, VE_HR = VE_HR_analytical, VE_TND) %>%
+    select(scenario, VE_RR, VE_HR, VE_TND) %>%
     pivot_longer(c(VE_RR, VE_HR, VE_TND), names_to = "Estimator", values_to = "VE") %>%
     mutate(
       Estimator = factor(Estimator, c("VE_RR", "VE_HR", "VE_TND")),
-      scenario  = factor(scenario, unique(results_df$scenario))
+      scenario  = factor(scenario, sc_levels)
     )
+
+  ref_df <- results_df %>%
+    mutate(scenario = factor(scenario, sc_levels))
 
   p <- ggplot(long, aes(x = scenario, y = VE, fill = Estimator)) +
     geom_col(position = position_dodge(width = 0.7), width = 0.65) +
+    geom_point(
+      data        = ref_df,
+      aes(x = scenario, y = VE_true),
+      inherit.aes = FALSE,
+      shape = 18, size = 4, colour = "black"
+    ) +
     scale_fill_manual(values = c(VE_RR = "#E53935", VE_HR = "#1E88E5", VE_TND = "#43A047")) +
     scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-    coord_cartesian(ylim = c(0, 0.75)) +
+    coord_cartesian(ylim = c(-0.1, 0.8)) +
     labs(
-      title = "VE estimator comparison across scenarios",
+      title    = "VE estimator comparison — observed data only",
+      subtitle = "All bars: T_pos / T_neg / N  |  \u25c6 = oracle VE_true (N-weighted susceptibility ratio, not observable)",
       x = "Scenario", y = "Estimated VE", fill = "Estimator"
     ) +
     theme_bw(base_size = 13) +
     theme(axis.text.x = element_text(angle = 20, hjust = 1))
 
   fname <- "outputs/ve_comparison.png"
-  ggsave(fname, p, width = 10, height = 5, dpi = 150)
+  ggsave(fname, p, width = 11, height = 5, dpi = 150)
   message("Saved: ", fname)
   invisible(p)
 }
@@ -395,8 +409,8 @@ plot_hazard_rates <- function(all_results) {
     scale_colour_manual(values = cols) +
     scale_x_continuous(breaks = seq(0, 150, by = 30)) +
     labs(
-      title    = "Instantaneous hazard rates and hazard ratio over time",
-      subtitle = "Hazard rate = S-weighted mean of h_i(t) per group  |  Dashed = true HR = 1 − VE_s = 0.4",
+      title    = "Instantaneous hazard rates and hazard ratio over time [oracle / theoretical]",
+      subtitle = "ODE internal state: S-weighted mean of h_i(t)  |  Not observable in practice  |  Dashed = true HR = 1 \u2212 VE_s = 0.4",
       x = "Day", y = NULL, colour = NULL
     ) +
     theme_bw(base_size = 11) +
