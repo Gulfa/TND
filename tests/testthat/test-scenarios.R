@@ -149,3 +149,55 @@ test_that("s6: stat VE_TND_adj ≈ s4 stat VE_TND_adj (same remaining indication
   expect_equal(all_results$s6$ve_stat$VE_TND_adj,
                all_results$s4$ve_stat$VE_TND_adj, tolerance = 0.02)
 })
+
+# ── s5 mechanism: p_seek ratio equality ──────────────────────────────────────
+# The TND design absorbs care-seeking bias because the ratio
+# p_seek_case / p_seek_control is the SAME in both groups.
+# This test verifies that invariant is met by construction.
+
+test_that('s5: p_seek_case / p_seek_control ratio is equal in both groups', {
+  p       <- scenarios$s5
+  ref_idx <- which(!p$is_vaccinated)
+  vax_idx <- which( p$is_vaccinated)
+  ratio_ref <- p$p_seek_case[ref_idx[1]] / p$p_seek_control[ref_idx[1]]
+  ratio_vax <- p$p_seek_case[vax_idx[1]] / p$p_seek_control[vax_idx[1]]
+  expect_equal(ratio_ref, ratio_vax, tolerance = 1e-10)
+})
+
+# ── s7: VE on other illness (VE_oa = 0.5) ────────────────────────────────────
+# Vaccine halves the background illness rate → vaccinated group generates
+# far fewer negative TND controls → OR_TND inflated → VE_TND overestimates.
+# VE_RR and VE_HR are unaffected (determined by epidemic dynamics only).
+
+test_that('s7: VE_RR equals s2 VE_RR (epidemic dynamics unchanged)', {
+  expect_equal(all_results$s7$ve$VE_RR, all_results$s2$ve$VE_RR, tolerance = 1e-6)
+})
+
+test_that('s7: VE_TND << VE_RR (halved vax controls inflate the OR)', {
+  ve <- all_results$s7$ve
+  # VE_oa = 0.5 → fewer vax controls → OR_TND inflated → VE_TND much lower
+  expect_lt(ve$VE_TND, ve$VE_RR - 0.20)
+})
+
+test_that('s7: VE_HR_analytical equals s2 (no change to susceptibilities)', {
+  expect_equal(all_results$s7$ve$VE_HR_analytical,
+               all_results$s2$ve$VE_HR_analytical, tolerance = 1e-6)
+})
+
+# ── s8: differential seasonal amplitude ──────────────────────────────────────
+# Reference group strongly seasonal (amp = 0.8), vaccinated flat (amp = 0.0).
+# The seasonal factor no longer cancels in the cumulative OR → VE_TND != VE_RR.
+# VE_RR and VE_HR are unaffected (epidemic dynamics unchanged).
+
+test_that('s8: VE_RR equals s2 VE_RR (epidemic dynamics unchanged)', {
+  expect_equal(all_results$s8$ve$VE_RR, all_results$s2$ve$VE_RR, tolerance = 1e-6)
+})
+
+test_that('s8: VE_TND < VE_RR (seasonal inflation of reference controls biases OR down)', {
+  ve <- all_results$s8$ve
+  expect_lt(ve$VE_TND, ve$VE_RR - 0.10)
+})
+
+test_that('s8: TND identity check is non-zero (seasonal factor does not cancel)', {
+  expect_gt(all_results$s8$ve$diagnostics$tnd_identity_diff, 0.05)
+})

@@ -32,6 +32,7 @@ make_params <- function(
     mu_oa_amp = 0.5      # seasonal amplitude: background peaks at 1.5× mid-season
 ) {
   n <- length(f)
+  mu_oa_amp <- if (length(mu_oa_amp) == 1) rep(mu_oa_amp, n) else mu_oa_amp
   stopifnot(
     length(sus)            == n,
     length(inf_mod)        == n,
@@ -39,10 +40,17 @@ make_params <- function(
     length(p_seek_case)    == n,
     length(p_seek_control) == n,
     length(mu_oa)          == n,
+    length(mu_oa_amp)      == n,
     length(is_vaccinated)  == n,
     abs(sum(f) - 1) < 1e-10,
     any(!is_vaccinated),
-    any( is_vaccinated)
+    any( is_vaccinated),
+    all(seed >= 0),
+    all(seed <= f * N + 1e-6),         # seed cannot exceed stratum size
+    all(p_seek_case    >= 0 & p_seek_case    <= 1),
+    all(p_seek_control >= 0 & p_seek_control <= 1),
+    all(mu_oa          >= 0),
+    all(mu_oa_amp      >= 0 & mu_oa_amp      <= 1)  # amp > 1 → negative rates
   )
   list(
     name           = name,
@@ -64,7 +72,7 @@ make_params <- function(
     risk_obs       = if (!is.null(risk_obs)) risk_obs
                      else rep("unknown", n),
     T_study        = T_study,
-    mu_oa_amp      = if (length(mu_oa_amp) == 1) rep(mu_oa_amp, n) else mu_oa_amp
+    mu_oa_amp      = mu_oa_amp   # already expanded to length-n above
   )
 }
 
@@ -106,6 +114,13 @@ make_flu_scenario <- function(
     mu_oa_amp_vax     = 0.5,    # seasonal amplitude for vaccinated group
     ...
 ) {
+  stopifnot(VE_s >= 0, VE_s <= 1,
+            VE_oa >= 0, VE_oa <= 1,
+            sus_ratio > 0,
+            f_highrisk_unvax >= 0, f_highrisk_unvax <= 1,
+            f_highrisk_vax   >= 0, f_highrisk_vax   <= 1,
+            f_v >= 0, f_v <= 1)
+
   # Normalise to weighted-mean(sus_ref) = 1
   sus_low  <- 1 / (1 + f_highrisk_unvax * (sus_ratio - 1))
   sus_high <- sus_low * sus_ratio

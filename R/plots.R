@@ -90,8 +90,8 @@ plot_ve_comparison <- function(results_df) {
   p <- ggplot(long, aes(x = scenario, y = VE, fill = Estimator)) +
     geom_col(position = position_dodge(width = 0.7), width = 0.65) +
     scale_fill_manual(values = c(VE_RR = "#E53935", VE_HR = "#1E88E5", VE_TND = "#43A047")) +
-    scale_y_continuous(labels = scales::percent_format(accuracy = 1),
-                       limits = c(0, 0.7)) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    coord_cartesian(ylim = c(0, 0.75)) +
     labs(
       title = "VE estimator comparison across scenarios",
       x = "Scenario", y = "Estimated VE", fill = "Estimator"
@@ -298,8 +298,8 @@ plot_ve_statistical <- function(all_results) {
     geom_hline(yintercept = 0.6, linetype = "dashed", colour = "black", linewidth = 0.6) +
     facet_wrap(~estimator, ncol = 3) +
     scale_fill_manual(values = c(Unadjusted = "#90CAF9", Adjusted = "#1565C0")) +
-    scale_y_continuous(labels = scales::percent_format(accuracy = 1),
-                       limits = c(0, 0.7)) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    coord_cartesian(ylim = c(-0.1, 0.75)) +
     labs(
       title    = "Statistical VE estimates: unadjusted vs adjusted for observed risk group",
       subtitle = "Dashed line = true VE_s = 60%  |  Error bars = 95% Wald CI",
@@ -338,8 +338,8 @@ plot_ve_hr_time <- function(all_results) {
     geom_point(colour = "#1565C0", size = 2, na.rm = TRUE) +
     facet_wrap(~scenario, ncol = 2) +
     scale_x_continuous(breaks = seq(0, 150, by = 30)) +
-    scale_y_continuous(labels = scales::percent_format(accuracy = 1),
-                       limits = c(0, 0.7)) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    coord_cartesian(ylim = c(-0.1, 0.75)) +
     labs(
       title    = "Time-varying VE_HR from piecewise Poisson counting process",
       subtitle = "Adjusted for observed risk group  |  At-risk = daily total tests  |  Dashed = true VE_s = 60%",

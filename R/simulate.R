@@ -52,6 +52,15 @@ run_simulation <- function(params) {
   keep <- grepl("^t$|^S_\\d+$|^I_\\d+$|^Rec_\\d+$|^CI_\\d+$|^h_\\d+$|^lambda$|^T_pos_\\d+$|^T_neg_\\d+$", names(ode_out))
   ode_out <- ode_out[, keep, drop = FALSE]
 
+  # Validate all expected per-stratum columns are present (guards against odin API changes)
+  expected_prefixes <- c("S_", "I_", "Rec_", "CI_", "h_", "T_pos_", "T_neg_")
+  expected_cols <- c("t", as.vector(outer(expected_prefixes, seq_len(n), paste0)))
+  missing_cols  <- setdiff(expected_cols, names(ode_out))
+  if (length(missing_cols) > 0)
+    stop("Missing ODE output columns after name normalisation: ",
+         paste(missing_cols, collapse = ", "),
+         "\n  Check odin model output names and gsub patterns in simulate.R")
+
   # Validation: mass balance per stratum (relative tolerance 0.1%)
   tol_rel <- 1e-3
   for (i in seq_len(n)) {

@@ -62,10 +62,12 @@ compute_ve <- function(sim) {
   VE_HR_empirical <- 1 - HR_weighted
   HR_sd           <- if (any(pos)) sd(HR_ts[pos]) else NA_real_
 
-  # Analytical VE_HR: initial hazard ratio before selective depletion.
-  # HR(t=0) = weighted-mean sus of vaccinated / weighted-mean sus of reference.
-  # Constant only when each group has uniform sus; varies over time with
-  # within-group heterogeneity (a key lesson of the multi-stratum model).
+  # Analytical VE_HR: N_strat-weighted susceptibility ratio between groups.
+  # This equals HR(t) only when within-group susceptibility is uniform; with
+  # within-group heterogeneity the empirical HR drifts over time (scenario 3)
+  # because high-sus individuals deplete faster, shifting the composition of
+  # remaining susceptibles.  VE_HR_analytical is therefore the "intended"
+  # per-stratum VE translated to group level, not the realized average.
   sus_vax          <- weighted.mean(params$sus[vax_idx], N_strat[vax_idx])
   sus_ref          <- weighted.mean(params$sus[ref_idx], N_strat[ref_idx])
   VE_HR_analytical <- 1 - sus_vax / sus_ref
@@ -277,10 +279,11 @@ compute_ve_statistical <- function(sim) {
   dT_neg <- apply(Tneg_mat, 2, diff)   # daily new negatives, T_study × n
   t_days <- ode$t[-1]
 
-  # 6 equal time bins (baseline hazard absorbed by fixed effects)
-  t_breaks <- seq(0, sim$T_study, length.out = 7)
+  # Equal time bins for piecewise Poisson (baseline hazard absorbed by FEs)
+  n_bins   <- 6L
+  t_breaks <- seq(0, sim$T_study, length.out = n_bins + 1L)
   t_bin    <- cut(t_days, t_breaks, include.lowest = TRUE)
-  t_mids   <- (t_breaks[-7] + t_breaks[-1]) / 2
+  t_mids   <- (t_breaks[-length(t_breaks)] + t_breaks[-1L]) / 2
   bins     <- levels(t_bin)
 
   # Build unified counting-process data frame: one row per stratum per day
